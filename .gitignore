@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dist folder
+dist/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Docker
+*.pid
+*.sock
+docker-compose.override.yml
+
+# Google credentials
+credentials/*.json
+
+# Build output
+*.tsbuildinfo
+
+# Misc
+coverage/

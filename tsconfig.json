@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*", "src/migrations/**/*", "src/knexfile.ts"],
+  "exclude": ["node_modules", "dist", "src/migrations"]
+}

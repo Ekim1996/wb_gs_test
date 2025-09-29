@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: testovoe-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: testdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: testovoe-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+    depends_on:
+      - db
+    command: >
+      sh -c "
+        echo 'Ждем пока поднимется Postgres...';
+        until nc -z db 5432; do sleep 5; done;
+        echo 'Запускаем миграции...';
+        npx knex migrate:latest --knexfile ./dist/knexfile.js;
+        echo 'Старт приложения';
+        node dist/index.js
+      "
+
+  wb-job:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: testovoe-wb-job
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+      - JOB_TYPE=WB
+    depends_on:
+      - db
+    command: >
+      sh -c "
+        while true; do
+          echo 'Ждем пока поднимется Postgres...';
+          until nc -z db 5432; do sleep 5; done;
+          echo 'Запускаем миграции...';
+          npx knex migrate:latest --knexfile ./dist/knexfile.js;
+          echo 'Запуск WB задачи';
+          node dist/wb-action.js;
+          echo 'Ждем 1 час до следующего запуска...';
+          sleep 3600;  # 1 час
+        done
+      "
+
+  gs-job:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: testovoe-gs-job
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+      - JOB_TYPE=GS
+    depends_on:
+      - db
+    command: >
+      sh -c "
+        while true; do
+          echo 'Ждем пока поднимется Postgres...';
+          until nc -z db 5432; do sleep 5; done;
+          echo 'Запускаем миграции...';
+          npx knex migrate:latest --knexfile ./dist/knexfile.js;
+          echo 'Запуск GS задачи';
+         node dist/gs-job.js;
+          echo 'Ждем 24 часа до следующего запуска...';
+          sleep 86400;  # 24 часа
+        done
+      "
+    volumes:
+      - ./trim-karma-473513-h5-52a7d5bdbb8c.json:/app/trim-karma-473513-h5-52a7d5bdbb8c.json:ro
+
+volumes:
+  db_data:
